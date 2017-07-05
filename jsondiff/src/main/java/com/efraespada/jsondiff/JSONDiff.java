@@ -28,6 +28,7 @@ public class JSONDiff {
     private static final String TAG_SET = "$set";
     private static final String TAG_UNSET = "$unset";
     private static final String TAG_RENAME = "$rename";
+    private static final String EMPTY_OBJECT = "{}";
 
     private static boolean DEBUG = false;
 
@@ -67,6 +68,7 @@ public class JSONDiff {
 
     /**
      * returns a map of the given JSON object
+     *
      * @param a
      * @return
      */
@@ -74,7 +76,8 @@ public class JSONDiff {
         Map<String, Object> map = new HashMap<>();
         try {
             ObjectMapper mapper = new ObjectMapper();
-            map = mapper.readValue(a.toString(), new TypeReference<Map<String, Object>>() {});
+            map = mapper.readValue(a.toString(), new TypeReference<Map<String, Object>>() {
+            });
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -184,13 +187,8 @@ public class JSONDiff {
                         e.printStackTrace();
                     }
                 } else if (valueB instanceof Map) {
-                    try {
-
-                        holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new JSONObject("{}"));
-                        hashMapper(holder, path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new HashMap<>(), (Map<Object, Object>) valueB);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+                    // holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new JSONObject(EMPTY_OBJECT));
+                    hashMapper(holder, path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new HashMap<>(), (Map<Object, Object>) valueB);
                 } else if (valueB instanceof List) {
                     try {
                         if (DEBUG) {
