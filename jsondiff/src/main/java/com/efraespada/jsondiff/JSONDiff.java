@@ -1,6 +1,5 @@
 package com.efraespada.jsondiff;
 
-
 import android.util.Log;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -30,7 +29,7 @@ public class JSONDiff {
     private static final String TAG_RENAME = "$rename";
     private static final String EMPTY_OBJECT = "{}";
 
-    private static boolean DEBUG = false;
+    private static boolean debug = false;
 
     private JSONDiff() {
         // nothing to do here
@@ -85,8 +84,8 @@ public class JSONDiff {
         }
     }
 
-    public static void setDebug(boolean DEBUG) {
-        JSONDiff.DEBUG = DEBUG;
+    public static void setDebug(boolean debug) {
+        JSONDiff.debug = debug;
     }
 
     public static <T, K, G> void hashMapper(final Map<String, JSONObject> holder, String path, Map<T, K> mapA, Map<T, K> mapB) {
@@ -119,7 +118,7 @@ public class JSONDiff {
                             e.printStackTrace();
                         }
                     }
-                } else if ((valueA instanceof Long && valueB instanceof Long) || (valueA instanceof Integer && valueB instanceof Integer)) {
+                } else if ((valueA instanceof Long && valueB instanceof Long) || (valueA instanceof Integer && valueB instanceof Integer) || (valueA instanceof Float && valueB instanceof Float) || (valueA instanceof Double && valueB instanceof Double)) {
                     if (valueA != valueB) {
                         try {
                             holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyA, valueB);
@@ -128,10 +127,18 @@ public class JSONDiff {
                         }
                     }
                 } else if (valueA instanceof Map && valueB instanceof Map) {
-                    hashMapper(holder, path + (path.length() == 0 ? "" : SEPARATOR) + keyA, (Map<Object, Object>) valueA, (Map<Object, Object>) valueB);
+                    if (((Map) valueB).isEmpty()) {
+                        try {
+                            holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new JSONObject(EMPTY_OBJECT));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        hashMapper(holder, path + (path.length() == 0 ? "" : SEPARATOR) + keyA, (Map<Object, Object>) valueA, (Map<Object, Object>) valueB);
+                    }
                 } else if (valueA instanceof List && valueB instanceof List) {
                     try {
-                        if (DEBUG) {
+                        if (debug) {
                             Log.e(TAG, String.valueOf(valueB));
                         }
                         JSONArray arraySet = new JSONArray();
@@ -154,9 +161,17 @@ public class JSONDiff {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
+                } else if (valueA instanceof Boolean && valueB instanceof Boolean) {
+                    if (valueA != valueB) {
+                        try {
+                            holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyA, valueB);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 } else {
-                    if (DEBUG) {
-                        Log.e(TAG, "not mapped value: " + String.valueOf(valueA));
+                    if (debug) {
+                        Log.e(TAG, "not mapped value: " + String.valueOf(valueA) + " - " + valueA.getClass());
                     }
                 }
             } else {
@@ -180,18 +195,31 @@ public class JSONDiff {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                } else if (valueB instanceof Long || valueB instanceof Integer) {
+                } else if (valueB instanceof Boolean) {
+                    try {
+                        holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, valueB);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } else if (valueB instanceof Long || valueB instanceof Integer || valueB instanceof Float || valueB instanceof Double) {
                     try {
                         holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, valueB);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 } else if (valueB instanceof Map) {
-                    // holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new JSONObject(EMPTY_OBJECT));
-                    hashMapper(holder, path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new HashMap<>(), (Map<Object, Object>) valueB);
+                    if (((Map) valueB).isEmpty()) {
+                        try {
+                            holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new JSONObject(EMPTY_OBJECT));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        hashMapper(holder, path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new HashMap<>(), (Map<Object, Object>) valueB);
+                    }
                 } else if (valueB instanceof List) {
                     try {
-                        if (DEBUG) {
+                        if (debug) {
                             Log.e(TAG, String.valueOf(valueB));
                         }
                         JSONArray array = new JSONArray();
@@ -203,8 +231,8 @@ public class JSONDiff {
                         e.printStackTrace();
                     }
                 } else {
-                    if (DEBUG) {
-                        Log.e(TAG, "not mapped value: " + String.valueOf(valueB));
+                    if (debug) {
+                        Log.e(TAG, "not mapped value: " + String.valueOf(valueB) + " - " + valueB.getClass());
                     }
                 }
             }
