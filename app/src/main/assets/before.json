@@ -1,1 +1,9 @@
-{}
+{
+    "index0": "hola",
+    "index1": {
+        "subindex0": 5,
+        "subindex1": "test2",
+        "subindex2": [1, 2, 3]
+    },
+    "index2": ["item1", "item3", "item4"]
+}

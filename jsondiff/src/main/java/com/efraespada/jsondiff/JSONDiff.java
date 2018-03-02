@@ -40,9 +40,9 @@ public class JSONDiff {
         Map<String, Object> mapB = getMap(b);
 
         final Map<String, JSONObject> holder = new HashMap<>();
-        holder.put("$set", new JSONObject());
-        holder.put("$unset", new JSONObject());
-        holder.put("$rename", new JSONObject());
+        holder.put(TAG_SET, new JSONObject());
+        holder.put(TAG_UNSET, new JSONObject());
+        holder.put(TAG_RENAME, new JSONObject());
 
         hashMapper(holder, "", mapA, mapB);
 
