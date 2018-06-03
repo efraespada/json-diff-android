@@ -10,6 +10,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -113,15 +115,15 @@ public class JSONDiff {
                 if (valueA instanceof String && valueB instanceof String) {
                     if (!valueA.equals(valueB)) {
                         try {
-                            holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyA, valueB);
+                            holder.get(TAG_SET).put(path + (path.length() == 0 ? "" : SEPARATOR) + keyA, valueB);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
                 } else if ((valueA instanceof Long && valueB instanceof Long) || (valueA instanceof Integer && valueB instanceof Integer) || (valueA instanceof Float && valueB instanceof Float) || (valueA instanceof Double && valueB instanceof Double)) {
-                    if (valueA != valueB) {
+                    if (!valueA.equals(valueB)) {
                         try {
-                            holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyA, valueB);
+                            holder.get(TAG_SET).put(path + (path.length() == 0 ? "" : SEPARATOR) + keyA, valueB);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -129,7 +131,7 @@ public class JSONDiff {
                 } else if (valueA instanceof Map && valueB instanceof Map) {
                     if (((Map) valueB).isEmpty()) {
                         try {
-                            holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new JSONObject(EMPTY_OBJECT));
+                            holder.get(TAG_SET).put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new JSONObject(EMPTY_OBJECT));
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -147,7 +149,7 @@ public class JSONDiff {
                                 arraySet.put(elemB);
                             }
                         }
-                        holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, arraySet);
+                        holder.get(TAG_SET).put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, arraySet);
 
                         JSONArray arrayUnset = new JSONArray();
                         for (G elemA : (List<G>) valueA) {
@@ -156,7 +158,7 @@ public class JSONDiff {
                             }
                         }
 
-                        holder.get("$unset").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, arrayUnset);
+                        holder.get(TAG_UNSET).put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, arrayUnset);
 
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -164,7 +166,7 @@ public class JSONDiff {
                 } else if (valueA instanceof Boolean && valueB instanceof Boolean) {
                     if (valueA != valueB) {
                         try {
-                            holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyA, valueB);
+                            holder.get(TAG_SET).put(path + (path.length() == 0 ? "" : SEPARATOR) + keyA, valueB);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -176,7 +178,7 @@ public class JSONDiff {
                 }
             } else {
                 try {
-                    holder.get("$unset").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyA, valueA);
+                    holder.get(TAG_UNSET).put(path + (path.length() == 0 ? "" : SEPARATOR) + keyA, valueA);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -191,26 +193,26 @@ public class JSONDiff {
             if (!mapA.containsKey(keyB)) {
                 if (valueB instanceof String) {
                     try {
-                        holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, valueB);
+                        holder.get(TAG_SET).put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, valueB);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 } else if (valueB instanceof Boolean) {
                     try {
-                        holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, valueB);
+                        holder.get(TAG_SET).put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, valueB);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 } else if (valueB instanceof Long || valueB instanceof Integer || valueB instanceof Float || valueB instanceof Double) {
                     try {
-                        holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, valueB);
+                        holder.get(TAG_SET).put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, valueB);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 } else if (valueB instanceof Map) {
                     if (((Map) valueB).isEmpty()) {
                         try {
-                            holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new JSONObject(EMPTY_OBJECT));
+                            holder.get(TAG_SET).put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, new JSONObject(EMPTY_OBJECT));
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -226,7 +228,7 @@ public class JSONDiff {
                         for (G elem : (List<G>) valueB) {
                             array.put(elem);
                         }
-                        holder.get("$set").put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, array);
+                        holder.get(TAG_SET).put(path + (path.length() == 0 ? "" : SEPARATOR) + keyB, array);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -236,6 +238,33 @@ public class JSONDiff {
                     }
                 }
             }
+        }
+    }
+
+    public static String hash(JSONObject a) {
+        return hash(a.toString());
+    }
+
+    public static String hash(String a) {
+        char[] val = a.toCharArray();
+        long hashValue = 0;
+        for (int i = 0; i < val.length; i++) {
+            int codeValue = Character.codePointAt(val, i);
+            if (codeValue > 0) {
+                hashValue += codeValue;
+            }
+        }
+        try {
+            MessageDigest mDigest = MessageDigest.getInstance("SHA1");
+            byte[] result = mDigest.digest(String.valueOf(hashValue).getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte aResult : result) {
+                sb.append(Integer.toString((aResult & 0xff) + 0x100, 16).substring(1));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return "";
         }
     }
 }
