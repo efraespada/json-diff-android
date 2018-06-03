@@ -90,7 +90,7 @@ public class JSONDiff {
         JSONDiff.debug = debug;
     }
 
-    public static <T, K, G> void hashMapper(final Map<String, JSONObject> holder, String path, Map<T, K> mapA, Map<T, K> mapB) {
+    private static <T, K, G> void hashMapper(final Map<String, JSONObject> holder, String path, Map<T, K> mapA, Map<T, K> mapB) {
 
         List<T> keysA = new ArrayList<>();
         for (Map.Entry<T, K> entryA : mapA.entrySet()) {
